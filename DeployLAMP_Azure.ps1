@@ -38,8 +38,10 @@ $adminCred=Get-Credential -Message "Name and Password of new VM, please enter" #
 $vmConfig = New-AzureRmVMConfig -VMName $vmname -VMSize "Basic_A1"
 $vmConfig = Set-AzureRmVMOperatingSystem -VM $vmConfig -Linux -ComputerName $vmname -Credential $adminCred
 $vmConfig = Set-AzureRmVMSourceImage -VM $vmConfig -PublisherName $lampstackSKU.PublisherName -Offer $imgOffer.Offer -Skus $lampstackSKU.Skus -Version latest
+$vmConfig = Set-AzureRmVMPlan -VM $vmConfig -Publisher $lampstackSKU.PublisherName -Product $imgOffer.Offer -Name $lampstackSKU.Skus
 $vmConfig = Add-AzureRmVMNetworkInterface -vm $vmConfig -Id $nic.Id
-$vmConfig = Set-AzureRmVMOSDisk -VM $vmConfig -Name $diskName -VhdUri $osDiskURI -CreateOption FromImage
+$vmConfig = Set-AzureRmVMOSDisk -VM $vmConfig -Name $diskName -VhdUri $osDiskURI -CreateOption Attach
+
 
 #After all the above prep work, we finally build the VM
 New-AzureRmVM -ResourceGroupName $rgName.ResourceGroupName -Location $loc -VM $vmConfig
