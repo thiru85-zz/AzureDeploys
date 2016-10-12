@@ -8,17 +8,17 @@
 
 ##################################################################################
 
-$vmname="" #Name of VM
+$vmname="<NAME>" #Name of VM
 
 #This is using the classic storage account and not the RM Storage Account
 $storAcc=Get-AzureStorageAccount
 $diskName=$vmname+"_OSDisk"
 $vmBlobPath ="vhds/"+$vmname+"_OSDisk.vhd"
-$osDiskURI = $storAcc.Endpoints[1]+$vmBlobPath
+$osDiskURI = $storAcc.Endpoints[0]+$vmBlobPath
 
 #West US is easier
 $loc = "westus"
-$rgName=Get-AzureRmResourceGroup | ?{$_.ResourceGroupName -like "<name of your ResourceGroup*"}
+$rgName=Get-AzureRmResourceGroup | ?{$_.ResourceGroupName -like "<PRE-EXISTING ResourceGroupName>*"}
 
 #Extracting the VM Image and the SKU/Offer
 $imgOffer=Get-AzureRmVMImageOffer -Location westus -PublisherName bitnami | ? {$_.Offer -like "lamp*"}
@@ -29,17 +29,18 @@ $lampstackSKU=Get-AzureRmVMImageSku -Location westus -PublisherName bitnami -Off
 $vnet=Get-AzureRmVirtualNetwork
 
 #Create new NIC for the new VM
-$nic=New-AzureRmNetworkInterface -Name $vmname+"_nic01" -ResourceGroupName $rgName -Location $loc -SubnetId $vnet.Subnets[1].Id
+$nicName = $vmname+"_nic01"
+$nic=New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $rgName.ResourceGroupName -Location $loc -SubnetId $vnet.Subnets[1].Id
 
 $adminCred=Get-Credential -Message "Name and Password of new VM, please enter" #Self-explanatory
 
 #Setting up VM Configuration such as size, image, VHD path etc.
 $vmConfig = New-AzureRmVMConfig -VMName $vmname -VMSize "Basic_A1"
 $vmConfig = Set-AzureRmVMOperatingSystem -VM $vmConfig -Linux -ComputerName $vmname -Credential $adminCred
-$vmConfig = Set-AzureRmVMSourceImage -VM $vmConfig -PublisherName bitnami -Offer $imgOffer -Skus $lampstackSKU
+$vmConfig = Set-AzureRmVMSourceImage -VM $vmConfig -PublisherName $lampstackSKU.PublisherName -Offer $imgOffer.Offer -Skus $lampstackSKU.Skus -Version latest
 $vmConfig = Add-AzureRmVMNetworkInterface -vm $vmConfig -Id $nic.Id
 $vmConfig = Set-AzureRmVMOSDisk -VM $vmConfig -Name $diskName -VhdUri $osDiskURI -CreateOption FromImage
 
 #After all the above prep work, we finally build the VM
-New-AzureRmVM -ResourceGroupName $rgName -Location $loc -VM $vmConfig
+New-AzureRmVM -ResourceGroupName $rgName.ResourceGroupName -Location $loc -VM $vmConfig
 
