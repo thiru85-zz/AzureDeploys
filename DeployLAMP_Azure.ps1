@@ -8,7 +8,7 @@
 
 ##################################################################################
 
-$vmname="hyp-vm03" #Name of VM
+$vmname="" #Name of VM
 
 #This is using the classic storage account and not the RM Storage Account
 $storAcc=Get-AzureStorageAccount
@@ -18,7 +18,7 @@ $osDiskURI = $storAcc.Endpoints[1]+$vmBlobPath
 
 #West US is easier
 $loc = "westus"
-$rgName=Get-AzureRmResourceGroup | ?{$_.ResourceGroupName -like "hyperion_da*"}
+$rgName=Get-AzureRmResourceGroup | ?{$_.ResourceGroupName -like "<name of your ResourceGroup*"}
 
 #Extracting the VM Image and the SKU/Offer
 $imgOffer=Get-AzureRmVMImageOffer -Location westus -PublisherName bitnami | ? {$_.Offer -like "lamp*"}
